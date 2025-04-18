@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home | Healthcare E-commerce</title>
+  <script type="module" src="firebase-setup.js"></script> <!-- Link your JS script here -->
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+  <h1>Welcome to Healthcare E-commerce</h1>
+  
+  <!-- Navigation Bar -->
+  <nav>
+    <ul>
+      <li><a href="products.html">Products</a></li>
+      <li><a href="cart.html">Cart</a></li>
+      <li><a href="diagnosis.html">AI Tool</a></li>
+    </ul>
+  </nav>
+
+  <!-- Display user info -->
+  <div>
+    <p>Welcome, <span id="userEmail"></span></p>
+    <button onclick="logoutUser()">Logout</button>
+  </div>
+
+  <script type="module">
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const auth = getAuth();
+    const user = auth.currentUser;
+    
+    // Display logged-in user's email
+    document.getElementById('userEmail').textContent = user ? user.email : "Guest";
+
+    // Logout function
+    function logoutUser() {
+      signOut(auth).then(() => {
+        window.location.href = "login.html";  // Redirect to login page after logout
+      }).catch((error) => {
+        alert("Error logging out: " + error.message);
+      });
+    }
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products | Healthcare E-commerce</title>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+  <h1>Products</h1>
+  <div id="product-list"></div> <!-- Will be populated with products from Firestore -->
+
+  <script>
+    // Example: Fetch products from Firestore and display them here
+    // You'd need to set up Firestore to fetch your products
+    const products = [
+      { name: "BP Monitor", price: "$50" },
+      { name: "Thermometer", price: "$15" }
+    ];
+
+    const productList = document.getElementById('product-list');
+    products.forEach(product => {
+      const productDiv = document.createElement('div');
+      productDiv.innerHTML = `<p>${product.name} - ${product.price}</p>`;
+      productList.appendChild(productDiv);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login / Register</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Welcome to Health Hive</h1>
+  </header>
+
+  <div class="container">
+    <form id="authForm">
+      <label for="email">Email</label>
+      <input type="email" id="email" required />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" required />
+
+      <!-- Action buttons -->
+      <button type="submit" id="loginBtn">Login</button>
+      <button type="button" id="registerBtn">Register</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { loginUser, registerUser } from "./firebase-setup.js";
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    // 🔐 Login Function
+    document.getElementById("authForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      loginUser(email, password);
+    });
+
+    // 📝 Register Function
+    document.getElementById("registerBtn").addEventListener("click", () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      registerUser(email, password);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Symptom Diagnosis</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    textarea, input, select { width: 100%; padding: 8px; margin-top: 4px; }
+    .result-box { margin-top: 20px; display: flex; flex-direction: column; gap: 20px; }
+    .result-column {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th { background: #eee; }
+    ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+
+  <h2>🩺 Symptom Diagnosis</h2>
+
+  <!-- Inputs -->
+  <label>Symptoms (comma-separated):</label>
+  <input type="text" id="symptomsInput" placeholder="e.g. headache, fever, fatigue">
+  <label>Age:</label><input type="number" id="ageInput" />
+  <label>Gender:</label>
+  <select id="genderInput">
+    <option value="female">Female</option>
+    <option value="male">Male</option>
+  </select>
+  <label>Height (cm):</label><input type="number" id="heightInput" />
+  <label>Weight (kg):</label><input type="number" id="weightInput" />
+  <label>Medical History (comma-separated):</label><input type="text" id="historyInput" />
+  <label>Current Medications (comma-separated):</label><input type="text" id="medsInput" />
+  <label>Allergies (comma-separated):</label><input type="text" id="allergiesInput" />
+  <label>Lifestyle (diet, alcohol, smoking, exercise):</label>
+  <input type="text" id="lifestyleInput" placeholder="e.g. balanced, occasional, false, moderate">
+
+  <br><br>
+  <button onclick="diagnose()">🔍 Diagnose</button>
+
+  <!-- Output -->
+  <div class="result-box">
+    <div class="result-column">
+      <h3>🧾 Diagnosis Result</h3>
+      <div id="diagnosisOutput">Waiting for diagnosis...</div>
+    </div>
+  </div>
+
+  <script>
+    function diagnose() {
+      const symptoms = document.getElementById("symptomsInput").value.split(",").map(s => s.trim());
+      const age = parseInt(document.getElementById("ageInput").value);
+      const gender = document.getElementById("genderInput").value;
+      const height = parseInt(document.getElementById("heightInput").value);
+      const weight = parseInt(document.getElementById("weightInput").value);
+      const medicalHistory = document.getElementById("historyInput").value.split(",").map(s => s.trim());
+      const currentMedications = document.getElementById("medsInput").value.split(",").map(s => s.trim());
+      const allergies = document.getElementById("allergiesInput").value.split(",").map(s => s.trim());
+      const [diet, alcohol, smokingStr, exercise] = document.getElementById("lifestyleInput").value.split(",").map(s => s.trim());
+
+      const data = JSON.stringify({
+        symptoms,
+        patientInfo: {
+          age,
+          gender,
+          height,
+          weight,
+          medicalHistory,
+          currentMedications,
+          allergies,
+          lifestyle: {
+            smoking: smokingStr === "true" || smokingStr === "yes",
+            alcohol,
+            exercise,
+            diet
+          }
+        },
+        lang: "en"
+      });
+
+      const xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function () {
+  if (xhr.readyState === XMLHttpRequest.DONE) {
+    try {
+      console.log("Full API Response:", xhr.responseText);  // Debug line
+      const response = JSON.parse(xhr.responseText);
+      renderDiagnosis(response);
+    } catch (e) {
+      document.getElementById("diagnosisOutput").textContent = "❌ Error parsing response";
+    }
+  }
+};
+
+      xhr.open("POST", "https://ai-medical-diagnosis-api-symptoms-to-results.p.rapidapi.com/analyzeSymptomsAndDiagnose?noqueue=1");
+      xhr.setRequestHeader("x-rapidapi-key", "09788efb55msh6d70ff630b1b099p14e991jsneb942f5dcff0");
+      xhr.setRequestHeader("x-rapidapi-host", "ai-medical-diagnosis-api-symptoms-to-results.p.rapidapi.com");
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.send(data);
+    }
+
+    function renderDiagnosis(data) {
+      const container = document.getElementById("diagnosisOutput");
+      container.innerHTML = "";
+
+      const conditions = data.analysis?.possibleConditions || [];
+      const advice = data.analysis?.generalAdvice || {};
+      const resources = data.educationalResources || {};
+
+      if (conditions.length > 0) {
+        const table = document.createElement("table");
+        const headerRow = table.insertRow();
+        ["Condition", "Risk Level", "Matching Symptoms", "Common Symptoms", "Description"].forEach(h => {
+          const th = document.createElement("th");
+          th.textContent = h;
+          headerRow.appendChild(th);
+        });
+
+        conditions.forEach(cond => {
+          const row = table.insertRow();
+          row.insertCell().textContent = cond.condition;
+          row.insertCell().textContent = cond.riskLevel;
+          row.insertCell().textContent = cond.matchingSymptoms.join(", ");
+          row.insertCell().textContent = cond.commonSymptoms.join(", ");
+          row.insertCell().textContent = cond.description;
+        });
+
+        const header = document.createElement("h4");
+        header.textContent = "Possible Conditions:";
+        container.appendChild(header);
+        container.appendChild(table);
+      } else {
+        container.innerHTML += "<p>⚠️ No conditions found.</p>";
+      }
+
+      if (advice.recommendedActions?.length || advice.whenToSeekMedicalAttention?.length) {
+        const adviceHeader = document.createElement("h4");
+        adviceHeader.textContent = "General Advice:";
+        container.appendChild(adviceHeader);
+
+        if (advice.recommendedActions?.length) {
+          const ul = document.createElement("ul");
+          advice.recommendedActions.forEach(action => {
+            const li = document.createElement("li");
+            li.textContent = action;
+            ul.appendChild(li);
+          });
+          container.appendChild(ul);
+        }
+
+        if (advice.whenToSeekMedicalAttention?.length) {
+          const seekHeader = document.createElement("h4");
+          seekHeader.textContent = "When to Seek Help:";
+          container.appendChild(seekHeader);
+
+          const ul = document.createElement("ul");
+          advice.whenToSeekMedicalAttention.forEach(action => {
+            const li = document.createElement("li");
+            li.textContent = action;
+            ul.appendChild(li);
+          });
+          container.appendChild(ul);
+        }
+      }
+
+      if (resources.preventiveMeasures?.length) {
+        const measuresHeader = document.createElement("h4");
+        measuresHeader.textContent = "Preventive Measures:";
+        container.appendChild(measuresHeader);
+
+        const ul = document.createElement("ul");
+        resources.preventiveMeasures.forEach(measure => {
+          const li = document.createElement("li");
+          li.textContent = measure;
+          ul.appendChild(li);
+        });
+        container.appendChild(ul);
+      }
+    }
+  </script>
+
+</body>
+</html>
